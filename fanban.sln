@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fanban.Domain", "Fanban.Domain\Fanban.Domain.fsproj", "{D69096D7-A9B5-44F5-8014-3D725DAAC396}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fanban.Domain.Tests", "Fanban.Domain.Tests\Fanban.Domain.Tests.fsproj", "{FE4479C0-1BA4-4B38-BCF1-390F0F5F836B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{D69096D7-A9B5-44F5-8014-3D725DAAC396}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D69096D7-A9B5-44F5-8014-3D725DAAC396}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D69096D7-A9B5-44F5-8014-3D725DAAC396}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE4479C0-1BA4-4B38-BCF1-390F0F5F836B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE4479C0-1BA4-4B38-BCF1-390F0F5F836B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE4479C0-1BA4-4B38-BCF1-390F0F5F836B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE4479C0-1BA4-4B38-BCF1-390F0F5F836B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
