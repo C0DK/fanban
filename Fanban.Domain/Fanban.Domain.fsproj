@@ -6,7 +6,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Library.fs"/>
+        <Compile Include="Index.fs" />
+        <Compile Include="ResultUtils.fs" />
+        <Compile Include="Card.fs" />
+        <Compile Include="Column.fs" />
+        <Compile Include="BoardId.fs" />
+        <Compile Include="BoardError.fs" />
+        <Compile Include="BoardEvents.fs" />
+        <Compile Include="Board.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FsToolkit.ErrorHandling" Version="3.0.0-beta007" />
+      <PackageReference Update="FSharp.Core" Version="6.0.5" />
     </ItemGroup>
 
 </Project>
