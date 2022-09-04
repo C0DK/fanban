@@ -23,3 +23,7 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Restore tools
+      run: dotnet tool restore
+    - name: Run fantomas
+      run: dotnet fantomas --recurse --check .
