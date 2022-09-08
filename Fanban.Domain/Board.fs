@@ -27,7 +27,7 @@ type Board =
         this.tryGetColumn columnName
         |> Result.requireSome (columnDoesntExist columnName)
 
-    static member createFrom (event: NewBoardEvent) =
+    static member createFrom(event: NewBoardEvent) =
         { Id = event.Id
           Name = event.Name
           Columns = event.ColumnNames |> Seq.map Column.WithName |> Seq.toList
@@ -49,12 +49,12 @@ type Board =
               |> Result.requireTrue (cardDoesntExist event.CardId) ]
             |> GivenValidThenReturn
                 { this with
-                    Columns = this.Columns |> Seq.map (
-                        fun column -> {
-                            column with
-                                Cards = column.Cards |> Seq.filter (fun card -> card.Id <> event.CardId) |> Seq.toList
-                        }) |> Seq.toList
-                    }
+                    Columns =
+                        this.Columns
+                        |> Seq.map (fun column ->
+                            { column with
+                                Cards = column.Cards |> Seq.filter (fun card -> card.Id <> event.CardId) |> Seq.toList })
+                        |> Seq.toList }
         | MoveCard event ->
             this.RequireContainsColumn event.NewColumn
             >>= fun _ -> (this.getCard event.CardId)

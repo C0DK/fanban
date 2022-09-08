@@ -23,7 +23,8 @@ module NewBoardWithName =
 
     [<Fact>]
     let ``New board always is same`` () =
-        Board.createFrom Fixture.NewBoardEvent |> shouldEqual (Board.createFrom Fixture.NewBoardEvent)
+        Board.createFrom Fixture.NewBoardEvent
+        |> shouldEqual (Board.createFrom Fixture.NewBoardEvent)
 
     [<Fact>]
     let ``New board event requires non empty string`` () =
@@ -103,7 +104,7 @@ module Apply =
             |> withoutColumn Fixture.ExtraColumns.Backlog
             |> shouldEqual (Error(BoardError.columnDoesntExist Fixture.ExtraColumns.Backlog))
 
-    module AddIssue =
+    module AddCard =
         [<Fact>]
         let ``with valid column, succeeds`` () =
             Fixture.board
@@ -126,9 +127,9 @@ module Apply =
             >>= withCard Fixture.Card
             |> shouldEqual (Error(BoardError.cardAlreadyExistExist Fixture.Card.Id))
 
-    module DeleteIssue =
+    module DeleteCard =
         [<Fact>]
-        let ``with valid issue id, removes Card`` () =
+        let ``with valid card id, removes Card`` () =
             Fixture.board
             |> withCard Fixture.Card
             >>= withoutCard Fixture.Card
@@ -137,12 +138,12 @@ module Apply =
             |> shouldNotContain Fixture.Card
 
         [<Fact>]
-        let ``with invalid issue id, fails`` () =
+        let ``with invalid card id, fails`` () =
             Fixture.board
             |> withoutCard Fixture.Card
             |> shouldEqual (Error(BoardError.cardDoesntExist Fixture.Card.Id))
 
-    module MoveIssue =
+    module MoveCard =
         [<Fact>]
         let ``With valid column, removes from existing column`` () =
             Fixture.board
