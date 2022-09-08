@@ -27,6 +27,12 @@ type Board =
         this.tryGetColumn columnName
         |> Result.requireSome (columnDoesntExist columnName)
 
+    static member createFrom (event: NewBoardEvent) =
+        { Id = event.Id
+          Name = event.Name
+          Columns = event.ColumnNames |> Seq.map Column.WithName |> Seq.toList
+          History = List.singleton (NewBoard event) }
+
     member this.applyEvent event =
         match event with
         | AddCard event ->
@@ -38,7 +44,17 @@ type Board =
                         match this.Columns with
                         | head :: tail -> { head with Cards = insertAt Beginning event.Card head.Cards } :: tail
                         | _ -> failwith "List of columns was empty - Invariance failed" }
-
+        | RemoveCard event ->
+            [ (this.cards |> Seq.exists (fun card -> card.Id = event.CardId))
+              |> Result.requireTrue (cardDoesntExist event.CardId) ]
+            |> GivenValidThenReturn
+                { this with
+                    Columns = this.Columns |> Seq.map (
+                        fun column -> {
+                            column with
+                                Cards = column.Cards |> Seq.filter (fun card -> card.Id <> event.CardId) |> Seq.toList
+                        }) |> Seq.toList
+                    }
         | MoveCard event ->
             this.RequireContainsColumn event.NewColumn
             >>= fun _ -> (this.getCard event.CardId)
@@ -80,7 +96,6 @@ type Board =
         |> Result.map (fun column -> column.Cards)
         |> Result.bind (Result.requireEmpty (cannotRemoveNonEmptyColumn columnName))
 
-
 module Board =
     let withName name (board: Board) =
         SetBoardNameEvent.New board.Id name >>= board.applyEvent
@@ -95,6 +110,9 @@ module Board =
 
     let withCard card (board: Board) =
         board.applyEvent (AddCard { BoardId = board.Id; Card = card })
+
+    let withoutCard (card: Card) (board: Board) =
+        board.applyEvent (RemoveCard { BoardId = board.Id; CardId = card.Id })
 
     let moveCard (card: Card) columnName (index: Index) (board: Board) =
         board.applyEvent (
@@ -111,9 +129,3 @@ module Board =
                 { BoardId = board.Id
                   ColumnName = columnName }
         )
-
-    let create (event: NewBoardEvent) =
-        { Id = event.Id
-          Name = event.Name
-          Columns = event.ColumnNames |> Seq.map Column.WithName |> Seq.toList
-          History = List.singleton (NewBoard event) }
