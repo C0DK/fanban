@@ -21,4 +21,4 @@ module Fixture =
         NewBoardEvent.Create BoardName [ Columns.Todo; Columns.Doing; Columns.Done ]
         |> Result.valueOr failwith
 
-    let board = create NewBoardEvent
+    let board = Board.createFrom NewBoardEvent

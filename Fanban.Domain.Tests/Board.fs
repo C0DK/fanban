@@ -1,8 +1,8 @@
 module Fanban.Domain.Tests.Board
 
+open FsCheck
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
-open Fanban.Domain.Tests.TestHelper
 open Fanban.Domain
 open Fanban.Domain.Index
 open Board
@@ -12,19 +12,20 @@ open Xunit
 module NewBoardWithName =
     [<Fact>]
     let ``New board has correct name`` () =
-        create Fixture.NewBoardEvent
+        Board.createFrom Fixture.NewBoardEvent
         |> fun board -> board.Name
         |> shouldEqual Fixture.BoardName
 
     [<Fact>]
     let ``New board has history of one`` () =
-        create Fixture.NewBoardEvent
+        Board.createFrom Fixture.NewBoardEvent
         |> fun board -> board.History
         |> shouldEqual [ NewBoard Fixture.NewBoardEvent ]
 
     [<Fact>]
     let ``New board always is same`` () =
-        create Fixture.NewBoardEvent |> shouldEqual (create Fixture.NewBoardEvent)
+        Board.createFrom Fixture.NewBoardEvent
+        |> shouldEqual (Board.createFrom Fixture.NewBoardEvent)
 
     [<Fact>]
     let ``New board event requires non empty string`` () =
@@ -39,6 +40,15 @@ module NewBoardWithName =
 
 
 module Apply =
+    [<Fact>]
+    let ``FSCheck test`` () =
+        let revIsOrig (xs:list<int>) = List.rev xs = xs
+        Check.Quick revIsOrig
+
+    [<Fact>]
+    let ``All events add to history`` () =
+        let revIsOrig (xs:list<int>) = List.rev xs = xs
+        Check.Quick revIsOrig
 
     module SetBoardName =
         [<Fact>]
@@ -104,7 +114,7 @@ module Apply =
             |> withoutColumn Fixture.ExtraColumns.Backlog
             |> shouldEqual (Error(BoardError.columnDoesntExist Fixture.ExtraColumns.Backlog))
 
-    module AddIssue =
+    module AddCard =
         [<Fact>]
         let ``with valid column, succeeds`` () =
             Fixture.board
@@ -127,7 +137,23 @@ module Apply =
             >>= withCard Fixture.Card
             |> shouldEqual (Error(BoardError.cardAlreadyExistExist Fixture.Card.Id))
 
-    module MoveIssue =
+    module DeleteCard =
+        [<Fact>]
+        let ``with valid card id, removes Card`` () =
+            Fixture.board
+            |> withCard Fixture.Card
+            >>= withoutCard Fixture.Card
+            |> Result.map (fun board -> board.cards)
+            |> Result.valueOr failwith
+            |> shouldNotContain Fixture.Card
+
+        [<Fact>]
+        let ``with invalid card id, fails`` () =
+            Fixture.board
+            |> withoutCard Fixture.Card
+            |> shouldEqual (Error(BoardError.cardDoesntExist Fixture.Card.Id))
+
+    module MoveCard =
         [<Fact>]
         let ``With valid column, removes from existing column`` () =
             Fixture.board

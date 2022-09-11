@@ -26,4 +26,4 @@ and Card =
                   Created = DateTime.Now
                   Updated = DateTime.Now }
         else
-            Error "Issue Name cannot be empty."
+            Error "Card Name cannot be empty."

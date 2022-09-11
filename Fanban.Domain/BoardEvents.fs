@@ -38,6 +38,7 @@ and RemoveColumnEvent =
       ColumnName: ColumnName }
 
 and AddCardEvent = { BoardId: BoardId; Card: Card }
+and RemoveCardEvent = { BoardId: BoardId; CardId: CardId }
 
 and MoveCardEvent =
     { BoardId: BoardId
@@ -50,5 +51,6 @@ and BoardEvent =
     | AddColumn of AddColumnEvent
     | RemoveColumn of RemoveColumnEvent
     | AddCard of AddCardEvent
+    | RemoveCard of RemoveCardEvent
     | MoveCard of MoveCardEvent
     | NewBoard of NewBoardEvent
