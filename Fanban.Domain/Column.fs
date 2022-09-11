@@ -7,6 +7,8 @@ type ColumnName =
 
     static member New name = ColumnName name
     member this.Value = let (ColumnName i) = this in i
+    override this.ToString() =
+        this.Value
 
 type Column =
     { Name: ColumnName

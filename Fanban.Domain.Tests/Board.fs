@@ -1,5 +1,6 @@
 module Fanban.Domain.Tests.Board
 
+open FsCheck
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 open Fanban.Domain
@@ -39,6 +40,15 @@ module NewBoardWithName =
 
 
 module Apply =
+    [<Fact>]
+    let ``FSCheck test`` () =
+        let revIsOrig (xs:list<int>) = List.rev xs = xs
+        Check.Quick revIsOrig
+
+    [<Fact>]
+    let ``All events add to history`` () =
+        let revIsOrig (xs:list<int>) = List.rev xs = xs
+        Check.Quick revIsOrig
 
     module SetBoardName =
         [<Fact>]
