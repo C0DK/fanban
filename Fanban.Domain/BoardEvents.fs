@@ -5,12 +5,6 @@ type BoardCreatedPayload =
       Name: Name
       ColumnNames: Name NonEmptyList }
 
-    static member Create name columns =
-        DomainEvent.newWithPayload
-            { BoardId = BoardId.New()
-              Name = name
-              ColumnNames = columns }
-
 and BoardNameSetPayload =
     { BoardId: BoardId
       Name: Name }

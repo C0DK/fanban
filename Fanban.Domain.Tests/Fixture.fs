@@ -18,6 +18,6 @@ module Fixture =
         let Backlog = Name.create "Backlog" |> Result.okOrFail
 
     let NewBoardEvent =
-        BoardCreatedPayload.Create BoardName (NonEmptyList.create [ Columns.Todo; Columns.Doing; Columns.Done ] |> Result.okOrFail)
+        BoardCreated.Create BoardName (NonEmptyList.create [ Columns.Todo; Columns.Doing; Columns.Done ] |> Result.okOrFail)
 
     let board = create NewBoardEvent

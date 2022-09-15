@@ -24,7 +24,6 @@ module NewBoardWithName =
     let ``New board always is same`` () =
         create Fixture.NewBoardEvent |> shouldEqual (create Fixture.NewBoardEvent)
 
-
 module Apply =
 
     module SetBoardName =
