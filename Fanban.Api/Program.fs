@@ -12,72 +12,13 @@ open Giraffe
 
 open Fanban.Api.Endpoints
 
-
-// ---------------------------------
-// Models
-// ---------------------------------
-
-type Message =
-    {
-        Text : string
-    }
-
-// ---------------------------------
-// Views
-// ---------------------------------
-
-module Views =
-    open Giraffe.ViewEngine
-
-    let layout (content: XmlNode list) =
-        html [] [
-            head [] [
-                title []  [ encodedText "Fanban.Api" ]
-                link [ _rel  "stylesheet"
-                       _type "text/css"
-                       _href "/main.css" ]
-            ]
-            body [] content
-        ]
-
-    let partial () =
-        h1 [] [ encodedText "Fanban.Api" ]
-
-    let index (model : Message) =
-        [
-            partial()
-            p [] [ encodedText model.Text ]
-        ] |> layout
-
-// ---------------------------------
-// Web app
-// ---------------------------------
-
-[<CLIMutable>]
-type Blah =
-    {
-        Foo : string
-        Bar : string
-    }
-
-let blahHandler (blah : Blah) : HttpHandler =
-    sprintf "Hello %s %s" blah.Foo blah.Bar
-    |> Successful.OK
-
-let indexHandler (name : string) =
-    let greetings = sprintf "Hello %s, from Giraffe!" name
-    let model     = { Text = greetings }
-    let view      = Views.index model
-    htmlView view
-
 let webApp =
     choose [
         GET >=>
             choose [
                 route "/" >=> text "Hello World"
-                route "/old" >=> indexHandler "world"
                 route "/boards/" >=> Endpoints.boards
-                routeBind<Blah> "/blah/{foo}/{bar}" blahHandler 
+                route "/board/" >=> Endpoints.board
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
