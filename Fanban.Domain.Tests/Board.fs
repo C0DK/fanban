@@ -2,7 +2,6 @@ module Fanban.Domain.Tests.Board
 
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
-open Fanban.Domain.Tests.TestHelper
 open Fanban.Domain
 open Fanban.Domain.Index
 open Board
@@ -37,9 +36,7 @@ module NewBoardWithName =
         NewBoardEvent.Create "My Great project" []
         |> shouldEqual (Error BoardError.boardCannotHaveZeroColumns)
 
-
 module Apply =
-
     module SetBoardName =
         [<Fact>]
         let ``Can set board name`` () =
