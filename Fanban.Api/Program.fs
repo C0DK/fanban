@@ -17,8 +17,7 @@ let webApp =
         GET >=>
             choose [
                 route "/" >=> text "Hello World"
-                route "/boards/" >=> Endpoints.boards
-                route "/board/" >=> Endpoints.board
+                route "/boards/" >=> boards
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
