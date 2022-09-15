@@ -1,6 +1,5 @@
 module Fanban.Domain.Tests.Board
 
-open FsCheck
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 open Fanban.Domain
@@ -8,6 +7,7 @@ open Fanban.Domain.Index
 open Board
 open FsUnitTyped
 open Xunit
+open FsCheck.Xunit
 
 module NewBoardWithName =
     [<Fact>]
@@ -40,69 +40,53 @@ module NewBoardWithName =
 
 
 module Apply =
-    [<Fact>]
-    let ``FSCheck test`` () =
-        let revIsOrig (xs:list<int>) = List.rev xs = xs
-        Check.Quick revIsOrig
-
-    [<Fact>]
-    let ``All events add to history`` () =
-        let revIsOrig (xs:list<int>) = List.rev xs = xs
-        Check.Quick revIsOrig
+    // TODO make sure we have valid event
+    [<Property>]
+    let ``All events add to history`` (someEvent: BoardEvent) =
+        Fixture.Board.applyEvent someEvent
+        |> Result.map (fun board -> board.History |> Seq.head)
+        |> Result.valueOr failwith
+        |> fun headOfHistory -> headOfHistory = someEvent
 
     module SetBoardName =
         [<Fact>]
         let ``Can set board name`` () =
-            Fixture.board
+            Fixture.Board
             |> withName Fixture.OtherBoardName
             |> Result.map (fun board -> board.Name)
             |> shouldEqual (Ok Fixture.OtherBoardName)
 
         [<Fact>]
         let ``to empty string, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withName ""
             |> shouldEqual (Error BoardError.boardNameCannotBeEmpty)
-
-        [<Fact>]
-        let ``Add event to history`` () =
-            Fixture.board
-            |> withName Fixture.OtherBoardName
-            |> Result.map (fun board -> board.History)
-            |> shouldEqual (
-                Ok(
-                    [ SetBoardName
-                          { BoardId = Fixture.board.Id
-                            Name = Fixture.OtherBoardName }
-                      NewBoard Fixture.NewBoardEvent ]
-                )
-            )
 
     module AddColumn =
         [<Fact>]
         let ``Add column`` () =
-            Fixture.board
+            Fixture.Board
             |> withColumnAt Beginning Fixture.ExtraColumns.Backlog
             |> Result.map (fun board -> board.Columns[0])
             |> shouldEqual (Ok(Column.WithName Fixture.ExtraColumns.Backlog))
 
         [<Fact>]
         let ``with existing column, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withColumnAt Beginning Fixture.Columns.Todo
             |> shouldEqual (Error(BoardError.columnAlreadyExist Fixture.Columns.Todo))
 
     module RemoveColumn =
         [<Fact>]
         let ``With existing column, succeeds`` () =
-            Fixture.board
+            Fixture.Board
             |> withoutColumn Fixture.Columns.Done
             |> Result.map (fun board -> board.Columns.Length)
             |> shouldEqual (Ok 2)
 
         [<Fact>]
         let ``with assigned card, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withCard Fixture.Card
             >>= withoutColumn Fixture.Columns.Todo
             |> shouldEqual (Error(BoardError.cannotRemoveNonEmptyColumn Fixture.Columns.Todo))
@@ -110,14 +94,14 @@ module Apply =
 
         [<Fact>]
         let ``with non existing column, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withoutColumn Fixture.ExtraColumns.Backlog
             |> shouldEqual (Error(BoardError.columnDoesntExist Fixture.ExtraColumns.Backlog))
 
     module AddCard =
         [<Fact>]
         let ``with valid column, succeeds`` () =
-            Fixture.board
+            Fixture.Board
             |> withCard Fixture.Card
             |> Result.map (fun board -> board.Columns)
             |> shouldEqual (
@@ -132,7 +116,7 @@ module Apply =
 
         [<Fact>]
         let ``with duplicate card id, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withCard Fixture.Card
             >>= withCard Fixture.Card
             |> shouldEqual (Error(BoardError.cardAlreadyExistExist Fixture.Card.Id))
@@ -140,7 +124,7 @@ module Apply =
     module DeleteCard =
         [<Fact>]
         let ``with valid card id, removes Card`` () =
-            Fixture.board
+            Fixture.Board
             |> withCard Fixture.Card
             >>= withoutCard Fixture.Card
             |> Result.map (fun board -> board.cards)
@@ -149,14 +133,14 @@ module Apply =
 
         [<Fact>]
         let ``with invalid card id, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withoutCard Fixture.Card
             |> shouldEqual (Error(BoardError.cardDoesntExist Fixture.Card.Id))
 
     module MoveCard =
         [<Fact>]
         let ``With valid column, removes from existing column`` () =
-            Fixture.board
+            Fixture.Board
             |> withCard Fixture.Card
             >>= moveCard Fixture.Card Fixture.Columns.Done Beginning
             >>= (fun board -> board.getColumn Fixture.Columns.Todo)
@@ -168,7 +152,7 @@ module Apply =
 
         [<Fact>]
         let ``With valid column, adds to new column`` () =
-            Fixture.board
+            Fixture.Board
             |> withCard Fixture.Card
             >>= moveCard Fixture.Card Fixture.Columns.Done Beginning
             >>= (fun board -> board.getColumn Fixture.Columns.Done)
@@ -180,7 +164,7 @@ module Apply =
 
         [<Fact>]
         let ``With invalid column, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> withoutColumn Fixture.Columns.Done
             >>= withCard Fixture.Card
             >>= moveCard Fixture.Card Fixture.Columns.Done Beginning
@@ -188,12 +172,12 @@ module Apply =
 
         [<Fact>]
         let ``With none existing card, fails`` () =
-            Fixture.board
+            Fixture.Board
             |> moveCard Fixture.Card Fixture.Columns.Todo Beginning
             |> shouldEqual (Error(BoardError.cardDoesntExist Fixture.Card.Id))
 
     module CreateBoard =
         [<Fact>]
         let ``fails on existing board`` () =
-            Fixture.board.applyEvent (NewBoard Fixture.NewBoardEvent)
+            Fixture.Board.applyEvent (NewBoard Fixture.NewBoardEvent)
             |> shouldEqual (Error(BoardError.cannotCreateExistingBoard))
