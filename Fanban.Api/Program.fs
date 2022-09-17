@@ -10,17 +10,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
-open Fanban.Api.Endpoints
-
-let webApp =
-    choose [
-        GET >=>
-            choose [
-                route "/" >=> text "Hello World"
-                route "/boards(/?)" >=> boards
-                routef "/board/%O(/?)" getBoard
-            ]
-        setStatusCode 404 >=> text "Not Found" ]
+open Fanban.Api
 
 // ---------------------------------
 // Error handler
@@ -53,7 +43,7 @@ let configureApp (app : IApplicationBuilder) =
             .UseHttpsRedirection())
         .UseCors(configureCors)
         .UseStaticFiles()
-        .UseGiraffe(webApp)
+        .UseGiraffe(Routing.webApp)
 
 let configureServices (services : IServiceCollection) =
     services.AddCors()    |> ignore

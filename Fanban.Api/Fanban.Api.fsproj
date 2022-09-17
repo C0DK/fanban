@@ -11,12 +11,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Endpoints.fs" />
-    <Compile Include="Endpoints.fs" />
+    <Compile Include="Routing.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FsToolkit.ErrorHandling" Version="3.0.0-beta007" />
+    <ProjectReference Include="..\Fanban.Application\Fanban.Application.fsproj" />
     <ProjectReference Include="..\Fanban.Domain\Fanban.Domain.fsproj" />
   </ItemGroup>
 
