@@ -1,5 +1,6 @@
 module Fanban.Api.Endpoints
 
+open System
 open Fanban.Domain
 open Fanban.Domain.Board
 open Fanban.Domain.Index
@@ -37,3 +38,6 @@ let someBoard =
 
 let boards : HttpHandler =
     json [ someBoard ]
+
+let getBoard (id: Guid) : HttpHandler =
+    json { someBoard with Id = BoardId.FromGuid(id) }

@@ -17,7 +17,8 @@ let webApp =
         GET >=>
             choose [
                 route "/" >=> text "Hello World"
-                route "/boards/" >=> boards
+                route "/boards(/?)" >=> boards
+                routef "/board/%O(/?)" getBoard
             ]
         setStatusCode 404 >=> text "Not Found" ]
 
