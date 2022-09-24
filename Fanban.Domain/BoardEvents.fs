@@ -8,17 +8,19 @@ open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 
 type NewBoardEvent =
-    { Id: BoardId
+    { BoardId: BoardId
       Name: string
       ColumnNames: ColumnName list }
 
-    static member Create name (columns: ColumnName list) =
+    static member Create (name: string) (columns: ColumnName list) =
         [ (String.IsNullOrWhiteSpace name) |> Result.requireFalse boardNameCannotBeEmpty
           columns.IsEmpty |> Result.requireFalse boardCannotHaveZeroColumns ]
-        |> GivenValidThenReturn
-            { Id = BoardId.New()
-              Name = name
-              ColumnNames = columns }
+        |> GivenValidThenReturn(
+            DomainEvent.newWithPayload
+                { BoardId = BoardId.New()
+                  Name = name
+                  ColumnNames = columns }
+        )
 
 and SetBoardNameEvent =
     { BoardId: BoardId
@@ -26,7 +28,7 @@ and SetBoardNameEvent =
 
     static member New id name =
         [ (String.IsNullOrWhiteSpace name) |> Result.requireFalse boardNameCannotBeEmpty ]
-        |> GivenValidThenReturn(SetBoardName { BoardId = id; Name = name })
+        |> GivenValidThenReturn(DomainEvent.newWithPayload (SetBoardName { BoardId = id; Name = name }))
 
 and AddColumnEvent =
     { BoardId: BoardId
@@ -51,4 +53,4 @@ and BoardEvent =
     | RemoveColumn of RemoveColumnEvent
     | AddCard of AddCardEvent
     | MoveCard of MoveCardEvent
-    | NewBoard of NewBoardEvent
+    | NewBoardEvent of NewBoardEvent

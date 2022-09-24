@@ -10,7 +10,7 @@ type Board =
     { Id: BoardId
       Name: string
       Columns: Column list
-      History: BoardEvent list }
+      History: BoardEvent DomainEvent list }
 
     member this.cards = this.Columns |> Seq.collect (fun column -> column.Cards)
 
@@ -27,8 +27,8 @@ type Board =
         this.tryGetColumn columnName
         |> Result.requireSome (columnDoesntExist columnName)
 
-    member this.applyEvent event =
-        match event with
+    member this.applyEvent(event: BoardEvent DomainEvent) =
+        match event.Payload with
         | AddCard event ->
             [ (this.cards |> Seq.exists (fun card -> card.Id = event.Card.Id))
               |> Result.requireFalse (cardAlreadyExistExist event.Card.Id) ]
@@ -69,7 +69,7 @@ type Board =
                         |> Seq.filter (fun column -> column.Name <> event.ColumnName)
                         |> Seq.toList }
         | SetBoardName setBoardName -> Ok { this with Name = setBoardName.Name }
-        | NewBoard _ -> Error cannotCreateExistingBoard
+        | NewBoardEvent _ -> Error cannotCreateExistingBoard
         |> Result.map (fun board -> { board with History = event :: board.History })
 
     member private board.RequireContainsColumn(name: ColumnName) =
@@ -87,33 +87,39 @@ module Board =
 
     let withColumnAt index columnName (board: Board) =
         board.applyEvent (
-            AddColumn
-                { BoardId = board.Id
-                  ColumnName = columnName
-                  Index = index }
+            DomainEvent.newWithPayload (
+                AddColumn
+                    { BoardId = board.Id
+                      ColumnName = columnName
+                      Index = index }
+            )
         )
 
     let withCard card (board: Board) =
-        board.applyEvent (AddCard { BoardId = board.Id; Card = card })
+        board.applyEvent (DomainEvent.newWithPayload (AddCard { BoardId = board.Id; Card = card }))
 
     let moveCard (card: Card) columnName (index: Index) (board: Board) =
         board.applyEvent (
-            MoveCard
-                { BoardId = board.Id
-                  CardId = card.Id
-                  NewColumn = columnName
-                  ColumnIndex = index }
+            DomainEvent.newWithPayload (
+                MoveCard
+                    { BoardId = board.Id
+                      CardId = card.Id
+                      NewColumn = columnName
+                      ColumnIndex = index }
+            )
         )
 
     let withoutColumn columnName (board: Board) =
         board.applyEvent (
-            RemoveColumn
-                { BoardId = board.Id
-                  ColumnName = columnName }
+            DomainEvent.newWithPayload (
+                RemoveColumn
+                    { BoardId = board.Id
+                      ColumnName = columnName }
+            )
         )
 
-    let create (event: NewBoardEvent) =
-        { Id = event.Id
-          Name = event.Name
-          Columns = event.ColumnNames |> Seq.map Column.WithName |> Seq.toList
-          History = List.singleton (NewBoard event) }
+    let create (event: NewBoardEvent DomainEvent) =
+        { Id = event.Payload.BoardId
+          Name = event.Payload.Name
+          Columns = event.Payload.ColumnNames |> Seq.map Column.WithName |> Seq.toList
+          History = List.singleton (event |> DomainEvent.map BoardEvent.NewBoardEvent) }

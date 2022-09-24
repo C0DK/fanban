@@ -20,7 +20,7 @@ module NewBoardWithName =
     let ``New board has history of one`` () =
         create Fixture.NewBoardEvent
         |> fun board -> board.History
-        |> shouldEqual [ NewBoard Fixture.NewBoardEvent ]
+        |> shouldEqual [ Fixture.NewBoardEvent.map BoardEvent.NewBoardEvent ]
 
     [<Fact>]
     let ``New board always is same`` () =
@@ -56,17 +56,16 @@ module Apply =
 
         [<Fact>]
         let ``Add event to history`` () =
-            Fixture.board
-            |> withName Fixture.OtherBoardName
+            let event =
+                (DomainEvent.newWithPayload (
+                    SetBoardName
+                        { BoardId = Fixture.board.Id
+                          Name = Fixture.OtherBoardName }
+                ))
+
+            Fixture.board.applyEvent event
             |> Result.map (fun board -> board.History)
-            |> shouldEqual (
-                Ok(
-                    [ SetBoardName
-                          { BoardId = Fixture.board.Id
-                            Name = Fixture.OtherBoardName }
-                      NewBoard Fixture.NewBoardEvent ]
-                )
-            )
+            |> shouldEqual (Ok([ event; Fixture.NewBoardEvent.map BoardEvent.NewBoardEvent ]))
 
     module AddColumn =
         [<Fact>]
@@ -169,5 +168,5 @@ module Apply =
     module CreateBoard =
         [<Fact>]
         let ``fails on existing board`` () =
-            Fixture.board.applyEvent (NewBoard Fixture.NewBoardEvent)
+            Fixture.board.applyEvent (Fixture.NewBoardEvent.map BoardEvent.NewBoardEvent)
             |> shouldEqual (Error(BoardError.cannotCreateExistingBoard))
