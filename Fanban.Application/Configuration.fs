@@ -15,10 +15,11 @@ type InMemoryBoardRepository() =
 
     member this.AddBoard (board : Board) =
         boards.Add(board.Id, board)
+        board.Id
 
 
 let repository = InMemoryBoardRepository();
 
 // Add some test data
 
-repository.AddBoard TestData.someBoard
+let someBoardId = repository.AddBoard TestData.someBoard

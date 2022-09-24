@@ -7,7 +7,7 @@ open Fanban.Domain.BoardError
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 
-type NewBoardEvent =
+type BoardCreated =
     { Id: BoardId
       Name: string
       ColumnNames: ColumnName list }
@@ -51,4 +51,4 @@ and BoardEvent =
     | RemoveColumn of RemoveColumnEvent
     | AddCard of AddCardEvent
     | MoveCard of MoveCardEvent
-    | NewBoard of NewBoardEvent
+    | BoardCreated of BoardCreated

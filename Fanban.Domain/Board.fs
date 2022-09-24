@@ -10,7 +10,7 @@ type Board =
     { Id: BoardId
       Name: string
       Columns: Column list
-      History: BoardEvent list }
+      History: BoardEvent DomainEvent list }
 
     member this.cards = this.Columns |> Seq.collect (fun column -> column.Cards)
 
@@ -69,8 +69,9 @@ type Board =
                         |> Seq.filter (fun column -> column.Name <> event.ColumnName)
                         |> Seq.toList }
         | SetBoardName setBoardName -> Ok { this with Name = setBoardName.Name }
-        | NewBoard _ -> Error cannotCreateExistingBoard
-        |> Result.map (fun board -> { board with History = event :: board.History })
+        | BoardCreated _ -> Error cannotCreateExistingBoard
+        // Todo wrap this everywhere else
+        |> Result.map (fun board -> { board with History = DomainEvent.newWithPayload event :: board.History })
 
     member private board.RequireContainsColumn(name: ColumnName) =
         board.getColumn name |> Result.map (fun _ -> ())
@@ -112,8 +113,8 @@ module Board =
                   ColumnName = columnName }
         )
 
-    let create (event: NewBoardEvent) =
-        { Id = event.Id
-          Name = event.Name
-          Columns = event.ColumnNames |> Seq.map Column.WithName |> Seq.toList
-          History = List.singleton (NewBoard event) }
+    let create (event: DomainEvent<BoardCreated>) =
+        { Id = event.payload.Id
+          Name = event.payload.Name
+          Columns = event.payload.ColumnNames |> Seq.map Column.WithName |> Seq.toList
+          History = List.singleton (event) }

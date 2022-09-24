@@ -1,0 +1,11 @@
+namespace Fanban.Application.Commands
+
+open Fanban.Domain
+
+type CreateBoard =
+    { Name: string
+      ColumnNames: ColumnName list }
+
+    member this.ToEvent () =
+        BoardCreated.Create this.Name this.ColumnNames
+        |> Result.map DomainEvent.newWithPayload

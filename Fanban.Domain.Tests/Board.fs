@@ -19,7 +19,7 @@ module NewBoardWithName =
     let ``New board has history of one`` () =
         create Fixture.NewBoardEvent
         |> fun board -> board.History
-        |> shouldEqual [ NewBoard Fixture.NewBoardEvent ]
+        |> shouldEqual [ BoardCreated Fixture.NewBoardEvent ]
 
     [<Fact>]
     let ``New board always is same`` () =
@@ -27,13 +27,13 @@ module NewBoardWithName =
 
     [<Fact>]
     let ``New board event requires non empty string`` () =
-        NewBoardEvent.Create "" [ Fixture.Columns.Todo ]
+        BoardCreated.Create "" [ Fixture.Columns.Todo ]
         |> shouldEqual (Error BoardError.boardNameCannotBeEmpty)
 
 
     [<Fact>]
     let ``New board event requires non empty columns`` () =
-        NewBoardEvent.Create "My Great project" []
+        BoardCreated.Create "My Great project" []
         |> shouldEqual (Error BoardError.boardCannotHaveZeroColumns)
 
 module Apply =
@@ -61,7 +61,7 @@ module Apply =
                     [ SetBoardName
                           { BoardId = Fixture.board.Id
                             Name = Fixture.OtherBoardName }
-                      NewBoard Fixture.NewBoardEvent ]
+                      BoardCreated Fixture.NewBoardEvent ]
                 )
             )
 
@@ -166,5 +166,5 @@ module Apply =
     module CreateBoard =
         [<Fact>]
         let ``fails on existing board`` () =
-            Fixture.board.applyEvent (NewBoard Fixture.NewBoardEvent)
+            Fixture.board.applyEvent (BoardCreated Fixture.NewBoardEvent)
             |> shouldEqual (Error(BoardError.cannotCreateExistingBoard))

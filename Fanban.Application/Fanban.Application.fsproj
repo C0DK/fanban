@@ -8,6 +8,8 @@
     <ItemGroup>
         <Compile Include="TestData.fs" />
         <Compile Include="Configuration.fs" />
+        <Compile Include="Commands.fs" />
+        <Compile Include="CommandHandler.fs" />
     </ItemGroup>
 
     <ItemGroup>

@@ -18,7 +18,7 @@ let celebrate = Card.New "Celebrate that it's perfect" |> Result.valueOr failwit
 let createWebapp = Card.New "Create webapp" |> Result.valueOr failwith
 
 let someBoard =
-    NewBoardEvent.Create "Our epic board" [ TODO; DOING; BLOCKED; DONE ]
+    BoardCreated.Create "Our epic board" [ TODO; DOING; BLOCKED; DONE ]
     |> Result.map create
     >>= withCard createDomainModel
     >>= moveCard createDomainModel DONE Beginning
@@ -31,7 +31,7 @@ let someBoard =
     |> Result.valueOr failwith
 
 let someEmptyBoard =
-    NewBoardEvent.Create "Some other board" [ TODO; DONE ]
+    BoardCreated.Create "Some other board" [ TODO; DONE ]
     |> Result.map create
     >>= withCard createDomainModel
     >>= moveCard createDomainModel DONE Beginning

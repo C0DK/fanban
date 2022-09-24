@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="DomainEvent.fs" />
         <Compile Include="Index.fs" />
         <Compile Include="ResultUtils.fs" />
         <Compile Include="Card.fs" />
