@@ -10,7 +10,7 @@ type Board =
     { Id: BoardId
       Name: string
       Columns: Column list
-      History: BoardEvent DomainEvent list }
+      History: BoardEvent list }
 
     member this.cards = this.Columns |> Seq.collect (fun column -> column.Cards)
 
@@ -27,48 +27,51 @@ type Board =
         this.tryGetColumn columnName
         |> Result.requireSome (columnDoesntExist columnName)
 
-    member this.applyEvent(event: BoardEvent DomainEvent) =
-        match event.Payload with
+    member this.applyEvent(event: BoardEvent) =
+        match event with
         | CardAdded event ->
-            [ (this.cards |> Seq.exists (fun card -> card.Id = event.Card.Id))
-              |> Result.requireFalse (cardAlreadyExistExist event.Card.Id) ]
+            [ (this.cards |> Seq.exists (fun card -> card.Id = event.Payload.Card.Id))
+              |> Result.requireFalse (cardAlreadyExistExist event.Payload.Card.Id) ]
             |> GivenValidThenReturn
                 { this with
                     Columns =
                         match this.Columns with
-                        | head :: tail -> { head with Cards = insertAt Beginning event.Card head.Cards } :: tail
+                        | head :: tail -> { head with Cards = insertAt Beginning event.Payload.Card head.Cards } :: tail
                         | _ -> failwith "List of columns was empty - Invariance failed" }
 
         | CardMoved event ->
-            this.RequireContainsColumn event.NewColumn
-            >>= fun _ -> (this.getCard event.CardId)
+            this.RequireContainsColumn event.Payload.NewColumn
+            >>= fun _ -> (this.getCard event.Payload.CardId)
             |> Result.map (fun card ->
                 { this with
                     Columns =
                         this.Columns
                         |> Seq.map (fun column ->
                             match column with
-                            | column when column.Name = event.NewColumn ->
-                                { column with Cards = column.Cards |> insertAt event.ColumnIndex card }
+                            | column when column.Name = event.Payload.NewColumn ->
+                                { column with Cards = column.Cards |> insertAt event.Payload.ColumnIndex card }
                             | column ->
                                 { column with Cards = column.Cards |> Seq.except (List.singleton card) |> Seq.toList })
                         |> Seq.toList })
         | ColumnAdded event ->
-            [ (this.tryGetColumn event.ColumnName)
-              |> Result.requireNone (columnAlreadyExist event.ColumnName) ]
+            [ (this.tryGetColumn event.Payload.ColumnName)
+              |> Result.requireNone (columnAlreadyExist event.Payload.ColumnName) ]
             |> GivenValidThenReturn
-                { this with Columns = this.Columns |> insertAt event.Index (Column.WithName event.ColumnName) }
+                { this with
+                    Columns =
+                        this.Columns
+                        |> insertAt event.Payload.Index (Column.WithName event.Payload.ColumnName) }
         | ColumnRemoved event ->
-            [ this.RequireContainsColumn event.ColumnName
-              this.RequireColumnIsEmpty event.ColumnName
+            [ this.RequireContainsColumn event.Payload.ColumnName
+              this.RequireColumnIsEmpty event.Payload.ColumnName
               this.Columns.Length > 1 |> Result.requireTrue boardCannotHaveZeroColumns ]
             |> GivenValidThenReturn
                 { this with
                     Columns =
                         this.Columns
-                        |> Seq.filter (fun column -> column.Name <> event.ColumnName)
+                        |> Seq.filter (fun column -> column.Name <> event.Payload.ColumnName)
                         |> Seq.toList }
-        | BoardNameSet setBoardName -> Ok { this with Name = setBoardName.Name }
+        | BoardNameSet setBoardName -> Ok { this with Name = setBoardName.Payload.Name }
         | BoardCreated _ -> Error cannotCreateExistingBoard
         |> Result.map (fun board -> { board with History = event :: board.History })
 
@@ -83,12 +86,12 @@ type Board =
 
 module Board =
     let withName name (board: Board) =
-        SetBoardNameEvent.New board.Id name >>= board.applyEvent
+        BoardNameSetPayload.New board.Id name >>= board.applyEvent
 
     let withColumnAt index columnName (board: Board) =
         board.applyEvent (
-            DomainEvent.newWithPayload (
-                ColumnAdded
+            ColumnAdded(
+                DomainEvent.newWithPayload
                     { BoardId = board.Id
                       ColumnName = columnName
                       Index = index }
@@ -96,23 +99,24 @@ module Board =
         )
 
     let withCard card (board: Board) =
-        board.applyEvent (DomainEvent.newWithPayload (CardAdded { BoardId = board.Id; Card = card }))
+        board.applyEvent (CardAdded(DomainEvent.newWithPayload ({ BoardId = board.Id; Card = card })))
 
     let moveCard (card: Card) columnName (index: Index) (board: Board) =
         board.applyEvent (
-            DomainEvent.newWithPayload (
-                CardMoved
+            CardMoved(
+                DomainEvent.newWithPayload (
                     { BoardId = board.Id
                       CardId = card.Id
                       NewColumn = columnName
                       ColumnIndex = index }
+                )
             )
         )
 
     let withoutColumn columnName (board: Board) =
         board.applyEvent (
-            DomainEvent.newWithPayload (
-                ColumnRemoved
+            ColumnRemoved(
+                DomainEvent.newWithPayload
                     { BoardId = board.Id
                       ColumnName = columnName }
             )
@@ -122,4 +126,4 @@ module Board =
         { Id = event.Payload.BoardId
           Name = event.Payload.Name
           Columns = event.Payload.ColumnNames |> Seq.map Column.WithName |> Seq.toList
-          History = List.singleton (event |> DomainEvent.map BoardEvent.BoardCreated) }
+          History = List.singleton (BoardEvent.BoardCreated event) }

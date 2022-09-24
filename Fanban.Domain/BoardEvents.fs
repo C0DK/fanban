@@ -28,7 +28,7 @@ and BoardNameSetPayload =
 
     static member New id name =
         [ (String.IsNullOrWhiteSpace name) |> Result.requireFalse boardNameCannotBeEmpty ]
-        |> GivenValidThenReturn(DomainEvent.newWithPayload (BoardNameSet { BoardId = id; Name = name }))
+        |> GivenValidThenReturn(BoardEvent.BoardNameSet(DomainEvent.newWithPayload { BoardId = id; Name = name }))
 
 and ColumnAddedPayload =
     { BoardId: BoardId
@@ -48,9 +48,9 @@ and CardMovedPayload =
       ColumnIndex: Index.Index }
 
 and BoardEvent =
-    | BoardNameSet of BoardNameSetPayload
-    | ColumnAdded of ColumnAddedPayload
-    | ColumnRemoved of ColumnRemovedPayload
-    | CardAdded of CardAddedPayload
-    | CardMoved of CardMovedPayload
-    | BoardCreated of BoardCreatedPayload
+    | BoardNameSet of BoardNameSetPayload DomainEvent
+    | ColumnAdded of ColumnAddedPayload DomainEvent
+    | ColumnRemoved of ColumnRemovedPayload DomainEvent
+    | CardAdded of CardAddedPayload DomainEvent
+    | CardMoved of CardMovedPayload DomainEvent
+    | BoardCreated of BoardCreatedPayload DomainEvent

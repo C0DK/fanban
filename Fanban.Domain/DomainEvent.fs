@@ -16,18 +16,8 @@ type DomainEvent<'Payload> =
       Created: DateTime
       Payload: 'Payload }
 
-    member this.map(selector: 'Payload -> 'NewPayload) : DomainEvent<'NewPayload> =
-        { Id = this.Id
-          Created = this.Created
-          Payload = (selector this.Payload) }
-
 module DomainEvent =
     let newWithPayload (payload: 'Payload) =
         { Id = EventId.New()
           Created = DateTime.UtcNow
           Payload = payload }
-
-    let map (selector: 'OldPayload -> 'NewPayload) (event: DomainEvent<'OldPayload>) : DomainEvent<'NewPayload> =
-        { Id = event.Id
-          Created = event.Created
-          Payload = (selector event.Payload) }
