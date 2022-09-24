@@ -7,7 +7,7 @@ open Fanban.Domain.BoardError
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 
-type NewBoardEvent =
+type BoardCreatedPayload =
     { BoardId: BoardId
       Name: string
       ColumnNames: ColumnName list }
@@ -22,35 +22,35 @@ type NewBoardEvent =
                   ColumnNames = columns }
         )
 
-and SetBoardNameEvent =
+and BoardNameSetPayload =
     { BoardId: BoardId
       Name: string }
 
     static member New id name =
         [ (String.IsNullOrWhiteSpace name) |> Result.requireFalse boardNameCannotBeEmpty ]
-        |> GivenValidThenReturn(DomainEvent.newWithPayload (SetBoardName { BoardId = id; Name = name }))
+        |> GivenValidThenReturn(DomainEvent.newWithPayload (BoardNameSet { BoardId = id; Name = name }))
 
-and AddColumnEvent =
+and ColumnAddedPayload =
     { BoardId: BoardId
       ColumnName: ColumnName
       Index: Index }
 
-and RemoveColumnEvent =
+and ColumnRemovedPayload =
     { BoardId: BoardId
       ColumnName: ColumnName }
 
-and AddCardEvent = { BoardId: BoardId; Card: Card }
+and CardAddedPayload = { BoardId: BoardId; Card: Card }
 
-and MoveCardEvent =
+and CardMovedPayload =
     { BoardId: BoardId
       CardId: CardId
       NewColumn: ColumnName
       ColumnIndex: Index.Index }
 
 and BoardEvent =
-    | SetBoardName of SetBoardNameEvent
-    | AddColumn of AddColumnEvent
-    | RemoveColumn of RemoveColumnEvent
-    | AddCard of AddCardEvent
-    | MoveCard of MoveCardEvent
-    | NewBoardEvent of NewBoardEvent
+    | BoardNameSet of BoardNameSetPayload
+    | ColumnAdded of ColumnAddedPayload
+    | ColumnRemoved of ColumnRemovedPayload
+    | CardAdded of CardAddedPayload
+    | CardMoved of CardMovedPayload
+    | BoardCreated of BoardCreatedPayload

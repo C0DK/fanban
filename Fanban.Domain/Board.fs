@@ -29,7 +29,7 @@ type Board =
 
     member this.applyEvent(event: BoardEvent DomainEvent) =
         match event.Payload with
-        | AddCard event ->
+        | CardAdded event ->
             [ (this.cards |> Seq.exists (fun card -> card.Id = event.Card.Id))
               |> Result.requireFalse (cardAlreadyExistExist event.Card.Id) ]
             |> GivenValidThenReturn
@@ -39,7 +39,7 @@ type Board =
                         | head :: tail -> { head with Cards = insertAt Beginning event.Card head.Cards } :: tail
                         | _ -> failwith "List of columns was empty - Invariance failed" }
 
-        | MoveCard event ->
+        | CardMoved event ->
             this.RequireContainsColumn event.NewColumn
             >>= fun _ -> (this.getCard event.CardId)
             |> Result.map (fun card ->
@@ -53,12 +53,12 @@ type Board =
                             | column ->
                                 { column with Cards = column.Cards |> Seq.except (List.singleton card) |> Seq.toList })
                         |> Seq.toList })
-        | AddColumn event ->
+        | ColumnAdded event ->
             [ (this.tryGetColumn event.ColumnName)
               |> Result.requireNone (columnAlreadyExist event.ColumnName) ]
             |> GivenValidThenReturn
                 { this with Columns = this.Columns |> insertAt event.Index (Column.WithName event.ColumnName) }
-        | RemoveColumn event ->
+        | ColumnRemoved event ->
             [ this.RequireContainsColumn event.ColumnName
               this.RequireColumnIsEmpty event.ColumnName
               this.Columns.Length > 1 |> Result.requireTrue boardCannotHaveZeroColumns ]
@@ -68,8 +68,8 @@ type Board =
                         this.Columns
                         |> Seq.filter (fun column -> column.Name <> event.ColumnName)
                         |> Seq.toList }
-        | SetBoardName setBoardName -> Ok { this with Name = setBoardName.Name }
-        | NewBoardEvent _ -> Error cannotCreateExistingBoard
+        | BoardNameSet setBoardName -> Ok { this with Name = setBoardName.Name }
+        | BoardCreated _ -> Error cannotCreateExistingBoard
         |> Result.map (fun board -> { board with History = event :: board.History })
 
     member private board.RequireContainsColumn(name: ColumnName) =
@@ -88,7 +88,7 @@ module Board =
     let withColumnAt index columnName (board: Board) =
         board.applyEvent (
             DomainEvent.newWithPayload (
-                AddColumn
+                ColumnAdded
                     { BoardId = board.Id
                       ColumnName = columnName
                       Index = index }
@@ -96,12 +96,12 @@ module Board =
         )
 
     let withCard card (board: Board) =
-        board.applyEvent (DomainEvent.newWithPayload (AddCard { BoardId = board.Id; Card = card }))
+        board.applyEvent (DomainEvent.newWithPayload (CardAdded { BoardId = board.Id; Card = card }))
 
     let moveCard (card: Card) columnName (index: Index) (board: Board) =
         board.applyEvent (
             DomainEvent.newWithPayload (
-                MoveCard
+                CardMoved
                     { BoardId = board.Id
                       CardId = card.Id
                       NewColumn = columnName
@@ -112,14 +112,14 @@ module Board =
     let withoutColumn columnName (board: Board) =
         board.applyEvent (
             DomainEvent.newWithPayload (
-                RemoveColumn
+                ColumnRemoved
                     { BoardId = board.Id
                       ColumnName = columnName }
             )
         )
 
-    let create (event: NewBoardEvent DomainEvent) =
+    let create (event: BoardCreatedPayload DomainEvent) =
         { Id = event.Payload.BoardId
           Name = event.Payload.Name
           Columns = event.Payload.ColumnNames |> Seq.map Column.WithName |> Seq.toList
-          History = List.singleton (event |> DomainEvent.map BoardEvent.NewBoardEvent) }
+          History = List.singleton (event |> DomainEvent.map BoardEvent.BoardCreated) }

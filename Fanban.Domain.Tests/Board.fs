@@ -20,7 +20,7 @@ module NewBoardWithName =
     let ``New board has history of one`` () =
         create Fixture.NewBoardEvent
         |> fun board -> board.History
-        |> shouldEqual [ Fixture.NewBoardEvent.map BoardEvent.NewBoardEvent ]
+        |> shouldEqual [ Fixture.NewBoardEvent.map BoardEvent.BoardCreated ]
 
     [<Fact>]
     let ``New board always is same`` () =
@@ -28,13 +28,13 @@ module NewBoardWithName =
 
     [<Fact>]
     let ``New board event requires non empty string`` () =
-        NewBoardEvent.Create "" [ Fixture.Columns.Todo ]
+        BoardCreatedPayload.Create "" [ Fixture.Columns.Todo ]
         |> shouldEqual (Error BoardError.boardNameCannotBeEmpty)
 
 
     [<Fact>]
     let ``New board event requires non empty columns`` () =
-        NewBoardEvent.Create "My Great project" []
+        BoardCreatedPayload.Create "My Great project" []
         |> shouldEqual (Error BoardError.boardCannotHaveZeroColumns)
 
 
@@ -58,14 +58,14 @@ module Apply =
         let ``Add event to history`` () =
             let event =
                 (DomainEvent.newWithPayload (
-                    SetBoardName
+                    BoardNameSet
                         { BoardId = Fixture.board.Id
                           Name = Fixture.OtherBoardName }
                 ))
 
             Fixture.board.applyEvent event
             |> Result.map (fun board -> board.History)
-            |> shouldEqual (Ok([ event; Fixture.NewBoardEvent.map BoardEvent.NewBoardEvent ]))
+            |> shouldEqual (Ok([ event; Fixture.NewBoardEvent.map BoardEvent.BoardCreated ]))
 
     module AddColumn =
         [<Fact>]
@@ -168,5 +168,5 @@ module Apply =
     module CreateBoard =
         [<Fact>]
         let ``fails on existing board`` () =
-            Fixture.board.applyEvent (Fixture.NewBoardEvent.map BoardEvent.NewBoardEvent)
+            Fixture.board.applyEvent (Fixture.NewBoardEvent.map BoardEvent.BoardCreated)
             |> shouldEqual (Error(BoardError.cannotCreateExistingBoard))
