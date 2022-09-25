@@ -1,51 +1,36 @@
 namespace Fanban.Domain
 
-open System
-open Fanban.Domain.ResultHelpers
-open Fanban.Domain.Index
-open Fanban.Domain.BoardError
-open FsToolkit.ErrorHandling
-open FsToolkit.ErrorHandling.Operator.Result
-
 type BoardCreatedPayload =
     { BoardId: BoardId
-      Name: string
-      ColumnNames: ColumnName list }
+      Name: Name
+      ColumnNames: Name NonEmptyList }
 
-    static member Create (name: string) (columns: ColumnName list) =
-        [ (String.IsNullOrWhiteSpace name) |> Result.requireFalse boardNameCannotBeEmpty
-          columns.IsEmpty |> Result.requireFalse boardCannotHaveZeroColumns ]
-        |> GivenValidThenReturn(
-            DomainEvent.newWithPayload
-                { BoardId = BoardId.New()
-                  Name = name
-                  ColumnNames = columns }
-        )
+    static member Create name columns =
+        DomainEvent.newWithPayload
+            { BoardId = BoardId.New()
+              Name = name
+              ColumnNames = columns }
 
 and BoardNameSetPayload =
     { BoardId: BoardId
-      Name: string }
-
-    static member New id name =
-        [ (String.IsNullOrWhiteSpace name) |> Result.requireFalse boardNameCannotBeEmpty ]
-        |> GivenValidThenReturn(BoardEvent.BoardNameSet(DomainEvent.newWithPayload { BoardId = id; Name = name }))
+      Name: Name }
 
 and ColumnAddedPayload =
     { BoardId: BoardId
-      ColumnName: ColumnName
+      ColumnName: Name
       Index: Index }
 
 and ColumnRemovedPayload =
     { BoardId: BoardId
-      ColumnName: ColumnName }
+      ColumnName: Name }
 
 and CardAddedPayload = { BoardId: BoardId; Card: Card }
 
 and CardMovedPayload =
     { BoardId: BoardId
       CardId: CardId
-      NewColumn: ColumnName
-      ColumnIndex: Index.Index }
+      NewColumn: Name
+      ColumnIndex: Index }
 
 and BoardEvent =
     | BoardNameSet of BoardNameSetPayload DomainEvent
@@ -54,3 +39,10 @@ and BoardEvent =
     | CardAdded of CardAddedPayload DomainEvent
     | CardMoved of CardMovedPayload DomainEvent
     | BoardCreated of BoardCreatedPayload DomainEvent
+
+module BoardCreated =
+    let Create name columns =
+        DomainEvent.newWithPayload
+            { BoardId = BoardId.New()
+              Name = name
+              ColumnNames = columns }

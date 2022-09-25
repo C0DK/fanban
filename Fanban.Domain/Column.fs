@@ -1,15 +1,10 @@
 namespace Fanban.Domain
 
-[<Struct>]
-type ColumnName =
-    private
-    | ColumnName of string
-
-    static member New name = ColumnName name
-    member this.Value = let (ColumnName i) = this in i
-
 type Column =
-    { Name: ColumnName
+    { Name: Name
       Cards: Card list }
 
     static member WithName name = { Name = name; Cards = List.empty }
+
+module Column =
+    let WithCard card column = { column with Cards = List.insertAt Beginning card column.Cards }

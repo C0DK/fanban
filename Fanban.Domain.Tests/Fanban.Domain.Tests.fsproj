@@ -11,11 +11,13 @@
         <Compile Include="TestHelper.fs" />
         <Compile Include="Fixture.fs" />
         <Compile Include="Board.fs" />
+        <Compile Include="Primitives.fs" />
         <Compile Include="Card.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="FsCheck.Xunit" Version="2.16.5" />
         <PackageReference Include="FsToolkit.ErrorHandling" Version="3.0.0-beta007" />
         <PackageReference Include="FsUnit" Version="5.0.3" />
         <PackageReference Include="FsUnit.xUnit" Version="5.0.3" />

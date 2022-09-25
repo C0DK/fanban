@@ -2,9 +2,7 @@ module Fanban.Domain.Tests.Board
 
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
-open Fanban.Domain.Tests.TestHelper
 open Fanban.Domain
-open Fanban.Domain.Index
 open Board
 open FsUnitTyped
 open Xunit
@@ -26,17 +24,6 @@ module NewBoardWithName =
     let ``New board always is same`` () =
         create Fixture.NewBoardEvent |> shouldEqual (create Fixture.NewBoardEvent)
 
-    [<Fact>]
-    let ``New board event requires non empty string`` () =
-        BoardCreatedPayload.Create "" [ Fixture.Columns.Todo ]
-        |> shouldEqual (Error BoardError.boardNameCannotBeEmpty)
-
-
-    [<Fact>]
-    let ``New board event requires non empty columns`` () =
-        BoardCreatedPayload.Create "My Great project" []
-        |> shouldEqual (Error BoardError.boardCannotHaveZeroColumns)
-
 
 module Apply =
 
@@ -47,12 +34,6 @@ module Apply =
             |> withName Fixture.OtherBoardName
             |> Result.map (fun board -> board.Name)
             |> shouldEqual (Ok Fixture.OtherBoardName)
-
-        [<Fact>]
-        let ``to empty string, fails`` () =
-            Fixture.board
-            |> withName ""
-            |> shouldEqual (Error BoardError.boardNameCannotBeEmpty)
 
         [<Fact>]
         let ``Add event to history`` () =
@@ -72,7 +53,7 @@ module Apply =
         let ``Add column`` () =
             Fixture.board
             |> withColumnAt Beginning Fixture.ExtraColumns.Backlog
-            |> Result.map (fun board -> board.Columns[0])
+            |> Result.map (fun board -> board.Columns.First)
             |> shouldEqual (Ok(Column.WithName Fixture.ExtraColumns.Backlog))
 
         [<Fact>]
@@ -108,7 +89,7 @@ module Apply =
         let ``with valid column, succeeds`` () =
             Fixture.board
             |> withCard Fixture.Card
-            |> Result.map (fun board -> board.Columns)
+            |> Result.map (fun board -> board.Columns |> NonEmptyList.value)
             |> shouldEqual (
                 Ok
                     [ { Name = Fixture.Columns.Todo

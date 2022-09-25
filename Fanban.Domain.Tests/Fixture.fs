@@ -5,20 +5,19 @@ open Board
 open FsToolkit.ErrorHandling
 
 module Fixture =
-    let BoardName = "Fanban"
-    let OtherBoardName = "Jira"
-    let Card = Card.New "A minimal domain model" |> Result.valueOr failwith
+    let BoardName = Name.create "Fanban" |> Result.okOrFail
+    let OtherBoardName = Name.create "Jira" |> Result.okOrFail
+    let Card = Card.New "A minimal domain model" |> Result.okOrFail
 
     module Columns =
-        let Todo = ColumnName.New "TODO"
-        let Doing = ColumnName.New "Doing"
-        let Done = ColumnName.New "Done"
+        let Todo = Name.create "TODO"  |> Result.okOrFail
+        let Doing = Name.create "Doing" |> Result.okOrFail
+        let Done = Name.create "Done" |> Result.okOrFail
 
     module ExtraColumns =
-        let Backlog = ColumnName.New "Backlog"
+        let Backlog = Name.create "Backlog" |> Result.okOrFail
 
     let NewBoardEvent =
-        BoardCreatedPayload.Create BoardName [ Columns.Todo; Columns.Doing; Columns.Done ]
-        |> Result.valueOr failwith
+        BoardCreatedPayload.Create BoardName (NonEmptyList.create [ Columns.Todo; Columns.Doing; Columns.Done ] |> Result.okOrFail)
 
     let board = create NewBoardEvent

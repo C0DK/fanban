@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Primitives.fs" />
         <Compile Include="DomainEvent.fs" />
-        <Compile Include="Index.fs" />
         <Compile Include="ResultUtils.fs" />
         <Compile Include="Card.fs" />
         <Compile Include="Column.fs" />
