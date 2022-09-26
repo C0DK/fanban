@@ -8,17 +8,12 @@ open FsUnitTyped
 open FsCheck
 open FsCheck.Xunit
 
-module NonEmptyString =
+module Name =
     module create =
         [<Fact>]
         let ``given empty string, fails`` () =
                 (Name.create "")
                 |> shouldEqual (Error "Expected non empty string!")
-
-        [<Fact>]
-        let ``given string, is good`` () =
-                (Name.create "test")
-                |> shouldEqual (Ok (Name "test"))
 
         [<Property>]
         let ``given non empty string, ok`` (value: string NonNull) =
@@ -37,3 +32,11 @@ module NonEmptyList =
         let ``given non empty list, ok`` (value: string list) =
             not value.IsEmpty ==> (
                 (NonEmptyList.create value) = (Ok (NonEmptyList value)))
+
+    module map =
+
+        [<Property>]
+        let ``given any NonEmptyList and any map, result is non-empty`` (value: string NonEmptyList, mapper: string -> string) =
+                (NonEmptyList.map mapper value)
+                |> NonEmptyList.value
+                |> fun v -> not (Seq.isEmpty v)

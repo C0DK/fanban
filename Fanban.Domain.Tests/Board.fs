@@ -6,6 +6,8 @@ open Fanban.Domain
 open Board
 open FsUnitTyped
 open Xunit
+open FsCheck
+open FsCheck.Xunit
 
 module NewBoardWithName =
     [<Fact>]
@@ -25,6 +27,17 @@ module NewBoardWithName =
         create Fixture.NewBoardEvent |> shouldEqual (create Fixture.NewBoardEvent)
 
 module Apply =
+    let boardGenerator =
+      gen { return Fixture.board }
+    [<Property>]
+    let ``If valid event, adds to history`` (someEvent: BoardEvent) =
+        let boardArb = boardGenerator |> Arb.fromGen
+        Prop.forAll boardArb (fun someBoard ->
+            let result = someBoard.applyEvent someEvent
+
+            result |> Result.isOk
+            ==> (result |> Result.map (fun board -> board.History.Head) |> (=) (Ok someEvent))
+        )
 
     module SetBoardName =
         [<Fact>]
