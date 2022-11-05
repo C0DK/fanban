@@ -6,7 +6,26 @@ open FsToolkit.ErrorHandling.Operator.Result
 open Fanban.Application.Commands
 open Fanban.Domain
 
-let SaveEvent (saveEvent: BoardEvent -> Result<Unit,string>) (command : CreateBoard) =
-    command.ToEvent()
-    |> Result.map BoardEvent.BoardCreated
-    |> Result.bind saveEvent
+let handle (saveEvent: BoardEvent -> Result<BoardEvent,string>) (command : BoardCommand) =
+            match command with
+            | CreateBoard payload ->
+                result {
+                    let! name = Name.create payload.Name
+                    let! columns = payload.ColumnNames
+                                    |> List.map Name.create
+                                    |> List.sequenceResultM
+                                    >>= NonEmptyList.create
+
+                    return BoardEvent.BoardCreated (BoardCreated.Create name columns)
+                } >>= saveEvent
+            | AddCard payload ->
+                saveEvent (BoardEvent.CardAdded (DomainEvent.newWithPayload { BoardId= payload.BoardId; Card = payload.Card }))
+
+            | MoveCard payload ->
+                result {
+                    let! column = Name.create payload.NewColumn
+
+                    let eventPayload = { BoardId= payload.BoardId; CardId = payload.CardId; ColumnIndex = payload.ColumnIndex; NewColumn = column }
+
+                    return BoardEvent.CardMoved (DomainEvent.newWithPayload eventPayload)
+                } >>= saveEvent

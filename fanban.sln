@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fanban.Utils", "Fanban.Util
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fanban.Application.Tests", "Fanban.Application.Tests\Fanban.Application.Tests.fsproj", "{80B3ADCF-45F6-4ADF-988C-8ECCCB2CFE3C}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fanban.CLI", "Fanban.CLI\Fanban.CLI.fsproj", "{1246F553-FE3C-45E7-B5B2-4E307552507A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,5 +39,9 @@ Global
 		{80B3ADCF-45F6-4ADF-988C-8ECCCB2CFE3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80B3ADCF-45F6-4ADF-988C-8ECCCB2CFE3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80B3ADCF-45F6-4ADF-988C-8ECCCB2CFE3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1246F553-FE3C-45E7-B5B2-4E307552507A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1246F553-FE3C-45E7-B5B2-4E307552507A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1246F553-FE3C-45E7-B5B2-4E307552507A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1246F553-FE3C-45E7-B5B2-4E307552507A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

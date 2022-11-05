@@ -1,5 +1,7 @@
 namespace Fanban.Domain
 
+open FsToolkit.ErrorHandling
+
 type Index =
     | Index of int
     | End
@@ -13,14 +15,24 @@ module List =
         | Beginning -> value :: source
 
 
-type Name = Name of string
+type Name =
+    | Name of string
+
+    member this.Value =
+        match this with
+        | Name e -> e
+    override this.ToString () = this.Value.ToString ()
 
 
 module Name =
     let create value =
         if value |> String.length > 0 then Ok (Name value) else Error "Expected non empty string!"
 
+    let createOrFail value =
+        create value |> Result.valueOr failwith
+
     let value (Name e) = e
+
 
 type NonEmptyList<'a when 'a : comparison> =
     | NonEmptyList of List<'a>

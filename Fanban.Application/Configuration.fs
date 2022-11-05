@@ -8,6 +8,3 @@ open Fanban.Application
 let repository = InMemoryBoardRepository();
 
 repository.AddBoard TestData.someBoard |> Result.valueOr failwithf
-
-module CommandHandler =
-    let ExecuteCreateBoard command = CommandHandler.CreateBoard repository.AddBoard command

@@ -5,6 +5,7 @@ open Fanban.Domain.BoardError
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 
+
 type Board =
     { Id: BoardId
       Name: Name
@@ -122,3 +123,24 @@ module Board =
           Name = event.Payload.Name
           Columns = event.Payload.ColumnNames |> NonEmptyList.map Column.WithName
           History = List.singleton (BoardEvent.BoardCreated event) }
+
+    let ApplyEvents (events: BoardEvent list) =
+        result {
+           let! firstEvent =
+                events
+                |> Seq.tryHead
+                |> Result.requireSome "Events were empty!"
+
+           let! board =
+               match firstEvent with
+               | BoardCreated domainEvent -> Ok (create domainEvent)
+               | _ -> Error $"First event was not a {nameof(BoardCreated)} event"
+
+
+           let folder (boardResult : Result<Board, string>) (event : BoardEvent) =
+               boardResult >>= (fun board -> board.applyEvent event)
+
+           let! board = events.Tail |> Seq.fold folder (Ok board)
+
+           return board
+        }

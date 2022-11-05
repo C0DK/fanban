@@ -23,13 +23,10 @@ type InMemoryEventStore() =
         events |> seq
 
     member this.GetEventsOf (boardId : BoardId) =
-        this.GetEvents() |> Seq.filter (fun event ->
-                                            match event with
-                                            | BoardCreated domainEvent -> domainEvent.Payload.BoardId = boardId
-                                            )
+        this.GetEvents() |> Seq.filter (fun event -> event.BoardId = boardId)
 
 
-    member this.Push event =
+    member this.Push (event: BoardEvent) : Result<BoardEvent, string>=
         events.Add event
-        Ok ()
+        Ok event
 

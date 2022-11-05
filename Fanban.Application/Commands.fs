@@ -1,10 +1,23 @@
 namespace Fanban.Application.Commands
 
+open FsToolkit.ErrorHandling
+open FsToolkit.ErrorHandling.Operator.Result
 open Fanban.Domain
 
-type CreateBoard =
+type CreateBoardPayload =
     { Name: string
-      ColumnNames: ColumnName list }
+      ColumnNames: string list }
 
-    member this.ToEvent () =
-        BoardCreated.create this.Name this.ColumnNames
+and AddCardPayload =
+    { BoardId: BoardId; Card: Card }
+
+and MoveCardPayload =
+    { BoardId: BoardId
+      CardId: CardId
+      NewColumn: string
+      ColumnIndex: Index }
+
+and BoardCommand  =
+    | CreateBoard of CreateBoardPayload
+    | AddCard of AddCardPayload
+    | MoveCard of MoveCardPayload
