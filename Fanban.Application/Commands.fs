@@ -8,8 +8,7 @@ type CreateBoardPayload =
     { Name: string
       ColumnNames: string list }
 
-and AddCardPayload =
-    { BoardId: BoardId; Card: Card }
+and AddCardPayload = { BoardId: BoardId; Card: Card }
 
 and MoveCardPayload =
     { BoardId: BoardId
@@ -17,7 +16,7 @@ and MoveCardPayload =
       NewColumn: string
       ColumnIndex: Index }
 
-and BoardCommand  =
+and BoardCommand =
     | CreateBoard of CreateBoardPayload
     | AddCard of AddCardPayload
     | MoveCard of MoveCardPayload

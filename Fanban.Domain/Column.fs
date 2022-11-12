@@ -7,4 +7,5 @@ type Column =
     static member WithName name = { Name = name; Cards = List.empty }
 
 module Column =
-    let WithCard card column = { column with Cards = List.insertAt Beginning card column.Cards }
+    let WithCard card column =
+        { column with Cards = List.insertAt Beginning card column.Cards }

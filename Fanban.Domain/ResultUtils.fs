@@ -1,4 +1,5 @@
 namespace Fanban.Domain
+
 open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 

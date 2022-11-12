@@ -5,18 +5,14 @@ type BoardCreatedPayload =
       Name: Name
       ColumnNames: Name NonEmptyList }
 
-and BoardNameSetPayload =
-    { BoardId: BoardId
-      Name: Name }
+and BoardNameSetPayload = { BoardId: BoardId; Name: Name }
 
 and ColumnAddedPayload =
     { BoardId: BoardId
       ColumnName: Name
       Index: Index }
 
-and ColumnRemovedPayload =
-    { BoardId: BoardId
-      ColumnName: Name }
+and ColumnRemovedPayload = { BoardId: BoardId; ColumnName: Name }
 
 and CardAddedPayload = { BoardId: BoardId; Card: Card }
 
@@ -66,8 +62,10 @@ and BoardEvent =
         | BoardNameSet domainEvent -> $"Set Board name to '{domainEvent.Payload.Name}'"
         | ColumnAdded domainEvent -> $"Added Column '{domainEvent.Payload.ColumnName}' at {domainEvent.Payload.Index}"
         | ColumnRemoved domainEvent -> $"Removed Column '{domainEvent.Payload.ColumnName}'"
-        | CardAdded domainEvent -> $"Added card '{domainEvent.Payload.Card.Name}' ('{domainEvent.Payload.Card.Id.ToShortString ()}')"
-        | CardMoved domainEvent -> $"Moved card '{domainEvent.Payload.CardId.ToShortString ()}' to '{domainEvent.Payload.NewColumn}' at {domainEvent.Payload.ColumnIndex}"
+        | CardAdded domainEvent ->
+            $"Added card '{domainEvent.Payload.Card.Name}' ('{domainEvent.Payload.Card.Id.ToShortString()}')"
+        | CardMoved domainEvent ->
+            $"Moved card '{domainEvent.Payload.CardId.ToShortString()}' to '{domainEvent.Payload.NewColumn}' at {domainEvent.Payload.ColumnIndex}"
         | BoardCreated domainEvent -> $"Created board '{domainEvent.Payload.Name}'"
 
 

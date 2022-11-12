@@ -6,26 +6,40 @@ open FsToolkit.ErrorHandling.Operator.Result
 open Fanban.Application.Commands
 open Fanban.Domain
 
-let handle (saveEvent: BoardEvent -> Result<BoardEvent,string>) (command : BoardCommand) =
-            match command with
-            | CreateBoard payload ->
-                result {
-                    let! name = Name.create payload.Name
-                    let! columns = payload.ColumnNames
-                                    |> List.map Name.create
-                                    |> List.sequenceResultM
-                                    >>= NonEmptyList.create
+let handle (saveEvent: BoardEvent -> Result<BoardEvent, string>) (command: BoardCommand) =
+    match command with
+    | CreateBoard payload ->
+        result {
+            let! name = Name.create payload.Name
 
-                    return BoardEvent.BoardCreated (BoardCreated.Create name columns)
-                } >>= saveEvent
-            | AddCard payload ->
-                saveEvent (BoardEvent.CardAdded (DomainEvent.newWithPayload { BoardId= payload.BoardId; Card = payload.Card }))
+            let! columns =
+                payload.ColumnNames
+                |> List.map Name.create
+                |> List.sequenceResultM
+                >>= NonEmptyList.create
 
-            | MoveCard payload ->
-                result {
-                    let! column = Name.create payload.NewColumn
+            return BoardCreated(BoardCreated.Create name columns)
+        }
+        >>= saveEvent
+    | AddCard payload ->
+        saveEvent (
+            CardAdded(
+                DomainEvent.newWithPayload
+                    { BoardId = payload.BoardId
+                      Card = payload.Card }
+            )
+        )
 
-                    let eventPayload = { BoardId= payload.BoardId; CardId = payload.CardId; ColumnIndex = payload.ColumnIndex; NewColumn = column }
+    | MoveCard payload ->
+        result {
+            let! column = Name.create payload.NewColumn
 
-                    return BoardEvent.CardMoved (DomainEvent.newWithPayload eventPayload)
-                } >>= saveEvent
+            let eventPayload =
+                { BoardId = payload.BoardId
+                  CardId = payload.CardId
+                  ColumnIndex = payload.ColumnIndex
+                  NewColumn = column }
+
+            return CardMoved(DomainEvent.newWithPayload eventPayload)
+        }
+        >>= saveEvent
