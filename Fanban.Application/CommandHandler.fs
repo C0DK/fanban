@@ -16,10 +16,10 @@ let handle (saveEvent: BoardEvent -> Result<BoardEvent,string>) (command : Board
                                     |> List.sequenceResultM
                                     >>= NonEmptyList.create
 
-                    return BoardEvent.BoardCreated (BoardCreated.Create name columns)
+                    return BoardCreated (BoardCreated.Create name columns)
                 } >>= saveEvent
             | AddCard payload ->
-                saveEvent (BoardEvent.CardAdded (DomainEvent.newWithPayload { BoardId= payload.BoardId; Card = payload.Card }))
+                saveEvent (CardAdded (DomainEvent.newWithPayload { BoardId= payload.BoardId; Card = payload.Card }))
 
             | MoveCard payload ->
                 result {
@@ -27,5 +27,5 @@ let handle (saveEvent: BoardEvent -> Result<BoardEvent,string>) (command : Board
 
                     let eventPayload = { BoardId= payload.BoardId; CardId = payload.CardId; ColumnIndex = payload.ColumnIndex; NewColumn = column }
 
-                    return BoardEvent.CardMoved (DomainEvent.newWithPayload eventPayload)
+                    return CardMoved (DomainEvent.newWithPayload eventPayload)
                 } >>= saveEvent

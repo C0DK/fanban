@@ -12,7 +12,7 @@ type Board =
       Columns: Column NonEmptyList
       History: BoardEvent list }
 
-    member this.cards =NonEmptyList.value this.Columns |> Seq.collect (fun column -> column.Cards)
+    member this.cards = NonEmptyList.value this.Columns |> Seq.collect (fun column -> column.Cards)
 
     member this.tryGetCard(cardId: CardId) =
         this.cards |> Seq.tryFind (fun card -> card.Id = cardId)
@@ -21,126 +21,140 @@ type Board =
         this.tryGetCard cardId |> Result.requireSome (cardDoesntExist cardId)
 
     member this.tryGetColumn(columnName: Name) =
-        this.Columns |> NonEmptyList.value |> Seq.tryFind (fun column -> column.Name = columnName)
+        this.Columns
+        |> NonEmptyList.value
+        |> Seq.tryFind (fun column -> column.Name = columnName)
 
     member this.getColumn(columnName: Name) =
         this.tryGetColumn columnName
         |> Result.requireSome (columnDoesntExist columnName)
 
-    member this.applyEvent(event: BoardEvent) =
-        match event with
-        | CardAdded event ->
-            [ (this.cards |> Seq.exists (fun card -> card.Id = event.Payload.Card.Id))
-              |> Result.requireFalse (cardAlreadyExistExist event.Payload.Card.Id) ]
-            |> GivenValidThenReturn
-                { this with Columns = this.Columns |> (NonEmptyList.mapFirstValue (Column.WithCard event.Payload.Card)) }
 
-        | CardMoved event ->
-            this.RequireContainsColumn event.Payload.NewColumn
-            >>= fun _ -> (this.getCard event.Payload.CardId)
-            |> Result.map (fun card ->
-                { this with
-                    Columns =
-                        this.Columns
-                        |> NonEmptyList.map (fun column ->
-                            match column with
-                            | column when column.Name = event.Payload.NewColumn ->
-                                { column with Cards = column.Cards |> List.insertAt event.Payload.ColumnIndex card }
-                            | column ->
-                                { column with Cards = column.Cards |> Seq.except (List.singleton card) |> Seq.toList })
-                         })
-        | ColumnAdded event ->
-            [ (this.tryGetColumn event.Payload.ColumnName)
-              |> Result.requireNone (columnAlreadyExist event.Payload.ColumnName) ]
-            |> GivenValidThenReturn
-                { this with
-                    Columns =
-                        this.Columns
-                        |> NonEmptyList.insertAt event.Payload.Index (Column.WithName event.Payload.ColumnName) }
-        | ColumnRemoved event ->
-            [ this.RequireContainsColumn event.Payload.ColumnName
-              this.RequireColumnIsEmpty event.Payload.ColumnName
-              (this.Columns |> NonEmptyList.length) > 1 |> Result.requireTrue boardCannotHaveZeroColumns ]
-            |> GivenValidThenReturn
-                { this with
-                    Columns =
-                        this.Columns
-                        |> NonEmptyList.filter (fun column -> column.Name <> event.Payload.ColumnName)
-                         }
-        | BoardNameSet setBoardName -> Ok { this with Name = setBoardName.Payload.Name }
-        | BoardCreated _ -> Error cannotCreateExistingBoard
-        |> Result.map (fun board -> { board with History = event :: board.History })
-
-    member private board.RequireContainsColumn(name: Name) =
+    member board.RequireContainsColumn(name: Name) =
         board.getColumn name |> Result.map (fun _ -> ())
 
-    member private board.RequireColumnIsEmpty(columnName: Name) =
+    member board.RequireColumnIsEmpty(columnName: Name) =
         (board.getColumn columnName)
         |> Result.map (fun column -> column.Cards)
         |> Result.bind (Result.requireEmpty (cannotRemoveNonEmptyColumn columnName))
 
 
 module Board =
+
+    let private applyCardAdded (payload: CardAddedPayload) (board: Board) =
+        [ (board.cards |> Seq.exists (fun card -> card.Id = payload.Card.Id))
+          |> Result.requireFalse (cardAlreadyExistExist payload.Card.Id) ]
+        |> GivenValidThenReturn
+            { board with Columns = board.Columns |> (NonEmptyList.mapFirstValue (Column.WithCard payload.Card)) }
+
+    let private applyCardMoved (payload: CardMovedPayload) (board: Board) =
+        board.RequireContainsColumn payload.NewColumn
+        >>= fun _ -> (board.getCard payload.CardId)
+        |> Result.map (fun card ->
+            { board with
+                Columns =
+                    board.Columns
+                    |> NonEmptyList.map (fun column ->
+                        match column with
+                        | column when column.Name = payload.NewColumn ->
+                            { column with Cards = column.Cards |> List.insertAt payload.ColumnIndex card }
+                        | column ->
+                            { column with Cards = column.Cards |> Seq.except (List.singleton card) |> Seq.toList }) })
+
+    let private applyColumnAdded (payload: ColumnAddedPayload) (board: Board) =
+        [ (board.tryGetColumn payload.ColumnName)
+          |> Result.requireNone (columnAlreadyExist payload.ColumnName) ]
+        |> GivenValidThenReturn
+            { board with
+                Columns =
+                    board.Columns
+                    |> NonEmptyList.insertAt payload.Index (Column.WithName payload.ColumnName) }
+
+    let private applyColumnRemoved (payload: ColumnRemovedPayload) (board: Board) =
+        [ board.RequireContainsColumn payload.ColumnName
+          board.RequireColumnIsEmpty payload.ColumnName
+          (board.Columns |> NonEmptyList.length) > 1
+          |> Result.requireTrue boardCannotHaveZeroColumns ]
+        |> GivenValidThenReturn
+            { board with
+                Columns =
+                    board.Columns
+                    |> NonEmptyList.filter (fun column -> column.Name <> payload.ColumnName) }
+
+    // These private methods should not be called directly as they leave the board in an invalid state, by not updating the history
+    let private applyBoardNameSet (payload: BoardNameSetPayload) (this: Board) = Ok { this with Name = payload.Name }
+
+    let private withEventInHistory (event: BoardEvent) (board: Board) =
+        { board with History = event :: board.History }
+
+    let applyEvent (event: BoardEvent) =
+        match event with
+        | CardAdded event -> applyCardAdded event.Payload
+        | CardMoved event -> applyCardMoved event.Payload
+        | ColumnAdded event -> applyColumnAdded event.Payload
+        | ColumnRemoved event -> applyColumnRemoved event.Payload
+        | BoardNameSet event -> applyBoardNameSet event.Payload
+        | BoardCreated _ -> (fun _ -> Error cannotCreateExistingBoard)
+        >> Result.map (withEventInHistory event)
+
     let withName name (board: Board) =
-        DomainEvent.newWithPayload { BoardId = board.Id; Name= name }
-        |> BoardNameSet
-        |> board.applyEvent
+        board
+        |> applyEvent (BoardNameSet(DomainEvent.newWithPayload { BoardId = board.Id; Name = name }))
 
     let withColumnAt index columnName (board: Board) =
-        board.applyEvent (
-            ColumnAdded(
+        applyEvent
+            (ColumnAdded(
                 DomainEvent.newWithPayload
                     { BoardId = board.Id
                       ColumnName = columnName
                       Index = index }
-            )
-        )
+            ))
+            board
 
     let withCard card (board: Board) =
-        board.applyEvent (CardAdded(DomainEvent.newWithPayload ({ BoardId = board.Id; Card = card })))
+        applyEvent (CardAdded(DomainEvent.newWithPayload ({ BoardId = board.Id; Card = card }))) board
 
     let moveCard (card: Card) columnName (index: Index) (board: Board) =
-        board.applyEvent (
-            CardMoved(
-                DomainEvent.newWithPayload { BoardId = board.Id
-                                             CardId = card.Id
-                                             NewColumn = columnName
-                                             ColumnIndex = index }
-            )
-        )
+        applyEvent
+            (CardMoved(
+                DomainEvent.newWithPayload
+                    { BoardId = board.Id
+                      CardId = card.Id
+                      NewColumn = columnName
+                      ColumnIndex = index }
+            ))
+            board
 
     let withoutColumn columnName (board: Board) =
-        board.applyEvent (
-            ColumnRemoved(
+        applyEvent
+            (ColumnRemoved(
                 DomainEvent.newWithPayload
                     { BoardId = board.Id
                       ColumnName = columnName }
-            )
-        )
+            ))
+            board
 
     let create (event: BoardCreatedPayload DomainEvent) =
         { Id = event.Payload.BoardId
           Name = event.Payload.Name
           Columns = event.Payload.ColumnNames |> NonEmptyList.map Column.WithName
-          History = List.singleton (BoardEvent.BoardCreated event) }
+          History = List.singleton (BoardCreated event) }
+
 
     let ApplyEvents (events: BoardEvent list) =
         result {
-           let! firstEvent =
-                events
-                |> Seq.tryHead
-                |> Result.requireSome "Events were empty!"
+            let! firstEvent = events |> Seq.tryHead |> Result.requireSome "Events were empty!"
 
-           let! board =
-               match firstEvent with
-               | BoardCreated domainEvent -> Ok (create domainEvent)
-               | _ -> Error $"First event was not a {nameof(BoardCreated)} event"
+            let! board =
+                match firstEvent with
+                | BoardCreated domainEvent -> Ok(create domainEvent)
+                | _ -> Error $"First event was not a {nameof (BoardCreated)} event"
 
 
-           let folder (boardResult : Result<Board, string>) (event : BoardEvent) =
-               boardResult >>= (fun board -> board.applyEvent event)
+            let folder (boardResult: Result<Board, string>) (event: BoardEvent) =
+                boardResult >>= (fun board -> applyEvent event board)
 
-           let! board = events.Tail |> Seq.fold folder (Ok board)
+            let! board = events.Tail |> Seq.fold folder (Ok board)
 
-           return board
+            return board
         }

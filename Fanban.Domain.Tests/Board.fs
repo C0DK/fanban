@@ -27,18 +27,17 @@ module NewBoardWithName =
         create Fixture.NewBoardEvent |> shouldEqual (create Fixture.NewBoardEvent)
 
 module Apply =
-    let boardGenerator =
-      gen { return Fixture.board }
+    let boardGenerator = gen { return Fixture.board }
 
-    [<Property(Skip="Doesnt work")>]
+    [<Property(Skip = "Doesnt work")>]
     let ``If valid event, adds to history`` (someEvent: BoardEvent) =
         let boardArb = boardGenerator |> Arb.fromGen
+
         Prop.forAll boardArb (fun someBoard ->
-            let result = someBoard.applyEvent someEvent
+            let result = applyEvent someEvent someBoard
 
             result |> Result.isOk
-            ==> (result |> Result.map (fun board -> board.History.Head) |> (=) (Ok someEvent))
-        )
+            ==> (result |> Result.map (fun board -> board.History.Head) |> (=) (Ok someEvent)))
 
     module SetBoardName =
         [<Fact>]
@@ -57,7 +56,7 @@ module Apply =
                           Name = Fixture.OtherBoardName }
                 )
 
-            Fixture.board.applyEvent event
+            applyEvent event Fixture.board
             |> Result.map (fun board -> board.History)
             |> shouldEqual (Ok([ event; BoardEvent.BoardCreated Fixture.NewBoardEvent ]))
 
@@ -162,5 +161,5 @@ module Apply =
     module CreateBoard =
         [<Fact>]
         let ``fails on existing board`` () =
-            Fixture.board.applyEvent (BoardEvent.BoardCreated Fixture.NewBoardEvent)
+            applyEvent (BoardCreated Fixture.NewBoardEvent) Fixture.board
             |> shouldEqual (Error(BoardError.cannotCreateExistingBoard))
