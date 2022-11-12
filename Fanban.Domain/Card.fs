@@ -10,8 +10,8 @@ type CardId =
     static member New() = CardId(Guid.NewGuid())
     member this.Value = let (CardId i) = this in i
 
-    override this.ToString () = this.Value.ToString ()
-    member this.ToShortString () = (this.Value.ToString ())[..6]
+    override this.ToString() = this.Value.ToString()
+    member this.ToShortString() = (this.Value.ToString())[..6]
 
 and Card =
     { Id: CardId

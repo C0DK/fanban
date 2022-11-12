@@ -10,8 +10,8 @@ type EventId =
     static member New() = EventId(Guid.NewGuid())
     static member FromGuid(value) = EventId(value)
     member this.Value = let (EventId i) = this in i
-    override this.ToString () = this.Value.ToString ()
-    member this.ToShortString () = (this.Value.ToString ())[..6]
+    override this.ToString() = this.Value.ToString()
+    member this.ToShortString() = (this.Value.ToString())[..6]
 
 
 type DomainEvent<'Payload> =

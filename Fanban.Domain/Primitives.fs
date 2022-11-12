@@ -21,20 +21,23 @@ type Name =
     member this.Value =
         match this with
         | Name e -> e
-    override this.ToString () = this.Value.ToString ()
+
+    override this.ToString() = this.Value.ToString()
 
 
 module Name =
     let create value =
-        if value |> String.length > 0 then Ok (Name value) else Error "Expected non empty string!"
+        if value |> String.length > 0 then
+            Ok(Name value)
+        else
+            Error "Expected non empty string!"
 
-    let createOrFail value =
-        create value |> Result.valueOr failwith
+    let createOrFail value = create value |> Result.valueOr failwith
 
     let value (Name e) = e
 
 
-type NonEmptyList<'a when 'a : comparison> =
+type NonEmptyList<'a when 'a: comparison> =
     | NonEmptyList of List<'a>
 
     member this.Value =
@@ -48,13 +51,18 @@ type NonEmptyList<'a when 'a : comparison> =
 module NonEmptyList =
 
     let create value =
-        if value |> Seq.length > 0 then Ok (NonEmptyList value) else Error "Expected non empty list!"
+        if value |> Seq.length > 0 then
+            Ok(NonEmptyList value)
+        else
+            Error "Expected non empty list!"
 
     let value (NonEmptyList e) = e
 
-    let map mapper list = value list |> List.map mapper |> NonEmptyList
+    let map mapper list =
+        value list |> List.map mapper |> NonEmptyList
 
-    let filter predicate list = value list |> List.filter predicate |> NonEmptyList
+    let filter predicate list =
+        value list |> List.filter predicate |> NonEmptyList
 
     let length list = value list |> List.length
 
@@ -62,8 +70,7 @@ module NonEmptyList =
         List.insertAt toIndex newValue (value source) |> NonEmptyList
 
     let mapFirstValue mapper (source: 'a NonEmptyList) =
-            match (value source) with
-            | head :: tail -> (mapper head) :: tail
-            | _ -> failwith "Empty list - Invariance failed"
-            |> NonEmptyList
-
+        match (value source) with
+        | head :: tail -> (mapper head) :: tail
+        | _ -> failwith "Empty list - Invariance failed"
+        |> NonEmptyList

@@ -5,6 +5,6 @@ open FsToolkit.ErrorHandling
 open FsToolkit.ErrorHandling.Operator.Result
 open Fanban.Application
 
-let repository = InMemoryBoardRepository();
+let repository = InMemoryBoardRepository()
 
 repository.AddBoard TestData.someBoard |> Result.valueOr failwithf
